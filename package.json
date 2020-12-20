@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "core-js": "^3.6.5",
+    "ipfs": "^0.52.2",
+    "orbit-db": "^0.26.0",
     "register-service-worker": "^1.7.1",
     "vue": "^2.6.11",
     "vue-class-component": "^7.2.3",
@@ -18,6 +20,7 @@
     "vuex": "^3.4.0"
   },
   "devDependencies": {
+    "@types/orbit-db": "git+https://github.com/orbitdb/orbit-db-types.git",
     "@typescript-eslint/eslint-plugin": "^2.33.0",
     "@typescript-eslint/parser": "^2.33.0",
     "@vue/cli-plugin-babel": "~4.5.0",
