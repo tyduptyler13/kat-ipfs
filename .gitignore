@@ -24,3 +24,13 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# All of our files are typescript
+*.js
+*.js.map
+
+# Special test dirs
+ipfsA
+ipfsB
+orbitdbA
+orbitdbB

@@ -25,7 +25,8 @@
       "dom",
       "dom.iterable",
       "scripthost"
-    ]
+    ],
+    "outDir": "build"
   },
   "include": [
     "src/**/*.ts",

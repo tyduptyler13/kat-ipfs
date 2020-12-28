@@ -11,6 +11,7 @@ export enum AccessType {
 	updateOther,
 	deleteOwn,
 	deleteOther,
+	noop, // Special case where the operation would result in no change.
 }
 
 export class AccessFlags {
@@ -24,7 +25,7 @@ export class AccessFlags {
 
 export interface ACLAccessControllerOptions {
 	address?: string;
-	determineAccessType?: (entry: LogEntry<never>) => AccessType;
+	determineAccessType?: (entry: LogEntry<never>) => Promise<AccessType>;
 	defaultAccessFlags?: AccessFlags;
 	creatorHasAllPerms?: boolean;
 }
@@ -37,8 +38,17 @@ export interface ACLAccessControllerOptions {
 export default class ACLAccessController extends AccessController {
 	private acl!: KeyValueStore<AccessFlags>;
 
-	constructor(private orbitDB: OrbitDB, private options: ACLAccessControllerOptions) {
+	readonly defaultAccessFlags?: AccessFlags;
+
+	// Likely to be defined later by the store type as this lambda likely depends on the store to be created first
+	// As orbitdb currently stands this is a circular dependency
+	determineAccessType?: (entry: LogEntry<never>) => Promise<AccessType>
+
+	constructor(private orbitDB: OrbitDB, options: ACLAccessControllerOptions) {
 		super()
+
+		this.defaultAccessFlags = options.defaultAccessFlags
+		this.determineAccessType = options.determineAccessType
 	}
 
 	static get type() {
@@ -55,9 +65,9 @@ export default class ACLAccessController extends AccessController {
 			return false;
 		}
 
-		const accessType = this.options.determineAccessType?.call(undefined, entry);
+		const accessType = await this.determineAccessType?.call(undefined, entry);
 
-		const access = Object.assign(new AccessFlags(), this.options.defaultAccessFlags || {}, this.acl.get(entry.id) || {})
+		const access = Object.assign(new AccessFlags(), this.defaultAccessFlags || {}, this.acl.get(entry.id) || {})
 
 		switch (accessType) {
 			case AccessType.create:
@@ -75,6 +85,7 @@ export default class ACLAccessController extends AccessController {
 			case AccessType.deleteOther:
 				if (!access.deleteOther) return false;
 				break;
+			case AccessType.noop: return true;
 			default:
 				console.debug("Unexpected access type:", accessType)
 				throw new Error("Unexpected access type!")
@@ -146,7 +157,7 @@ export default class ACLAccessController extends AccessController {
 		const controller = new ACLAccessController(orbitDB, options);
 		await controller.load(options.address || 'default-acl-controller');
 
-		if (options.creatorHasAllPerms !== false) {
+		if (options.creatorHasAllPerms !== false && !options.address) {
 			// @ts-ignore
 			await controller.setPerms(orbitDB.identity.id, {
 				create: true,
