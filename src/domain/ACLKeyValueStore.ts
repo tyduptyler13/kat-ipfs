@@ -4,6 +4,7 @@ import Store from "orbit-db-store";
 import ACLAccessController, {AccessType} from "./ACLAccessController";
 import OrbitDB from "orbit-db";
 import AccessController from "orbit-db-access-controllers/src/access-controller-interface";
+import KeyValueStore from "orbit-db-kvstore";
 
 export interface Log<T> {
     values: Array<LogEntry<T>>;
@@ -53,6 +54,9 @@ export class ACLKeyValueIndex<T> implements Index<T> {
     }
 }
 
+/**
+ * Extend the typescript interface to include some missing fields
+ */
 declare module "orbit-db-store" {
     // It would be ideal if we could extend this to include generics for the hidden index
     export default interface Store {
@@ -63,7 +67,7 @@ declare module "orbit-db-store" {
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
 // @ts-ignore (Ignore the fact we are overriding the default definition of Store with a generified one)
-export default class ACLKeyValueStore<T> extends Store {
+export default class ACLKeyValueStore<T> extends KeyValueStore<T> {
     constructor(ipfs: IPFS.IPFS, id: Identity, dbname: string, options: IStoreOptions) {
         super(ipfs, id, dbname, Object.assign({Index: ACLKeyValueIndex}, options))
 
@@ -82,31 +86,11 @@ export default class ACLKeyValueStore<T> extends Store {
     }
 
     get all() {
-        return this._index._index;
+        return Object.entries((this._index as ACLKeyValueIndex<T>)._index);
     }
 
     get(key: string): T {
         return this._index.get(key)
-    }
-
-    set(key: string, data: T, options = {}) {
-        return this.put(key, data, options)
-    }
-
-    put(key: string, data: T, options = {}) {
-        return this._addOperation({
-            op: 'PUT',
-            key: key,
-            value: data
-        }, options)
-    }
-
-    del(key: string, options = {}) {
-        return this._addOperation({
-            op: 'DEL',
-            key: key,
-            value: null
-        }, options)
     }
 
     private async determineAccessType(entry: LogEntry<never>): Promise<AccessType> {

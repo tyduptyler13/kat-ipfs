@@ -64,7 +64,8 @@ describe('kat-ipfs', () => {
 
         it('#create', async () => {
             await dbA.put('test', 'test')
-            await waitForReplication(dbB, () => assert.equal(dbB.get('test'), 'test'))
+            await waitForReplication(dbB)
+            assert.equal(dbB.get('test'), 'test')
             await assert.isRejected(dbB.put('test', 'test2'), `Could not append entry, key "${dbB.identity.id}" is not allowed to write to the log`)
         })
 
@@ -73,12 +74,14 @@ describe('kat-ipfs', () => {
                 // Make sure we have an entry first!
                 await dbA.put('test', 'test');
                 // Wait for it to replicate
-                await waitForReplication(dbB, () => assert.equal(dbB.get('test'), 'test'))
+                await waitForReplication(dbB)
+                assert.equal(dbB.get('test'), 'test')
             }
 
             // Update
             await dbA.put('test', 'test2')
-            await waitForReplication(dbB, () => assert.equal(dbB.get('test'), 'test2'))
+            await waitForReplication(dbB)
+            assert.equal(dbB.get('test'), 'test2')
         })
 
         it('#updateOther', async () => {
@@ -86,7 +89,8 @@ describe('kat-ipfs', () => {
                 // Make sure we have an entry first!
                 await dbA.put('test', 'test');
                 // Wait for it to replicate
-                await waitForReplication(dbB, () => assert.equal(dbB.get('test'), 'test'))
+                await waitForReplication(dbB)
+                assert.equal(dbB.get('test'), 'test')
             }
             await assert.isRejected(dbB.put('test', 'test2'), `Could not append entry, key "${dbB.identity.id}" is not allowed to write to the log`)
         })
@@ -96,11 +100,13 @@ describe('kat-ipfs', () => {
                 // Make sure we have an entry first!
                 await dbA.put('test', 'test');
                 // Wait for it to replicate
-                await waitForReplication(dbB, () => assert.equal(dbB.get('test'), 'test'))
+                await waitForReplication(dbB)
+                assert.equal(dbB.get('test'), 'test')
             }
 
             await dbA.del('test')
-            await waitForReplication(dbB, () => assert.notExists(dbB.get('test')))
+            await waitForReplication(dbB)
+            assert.notExists(dbB.get('test'))
         })
 
         it('#deleteOther', async () => {
@@ -108,14 +114,15 @@ describe('kat-ipfs', () => {
                 // Make sure we have an entry first!
                 await dbA.put('test', 'test');
                 // Wait for it to replicate
-                await waitForReplication(dbB, () => assert.equal(dbB.get('test'), 'test'))
+                await waitForReplication(dbB)
+                assert.equal(dbB.get('test'), 'test')
             }
 
             await assert.isRejected(dbB.del('test'), `Could not append entry, key "${dbB.identity.id}" is not allowed to write to the log`);
         })
 
         it('#noop', async () => {
-            // TODO
+            // TODO Design a way to trigger the noop case. Should it exception or write to the log?
         })
 
         after(async () => {
@@ -135,12 +142,19 @@ describe('kat-ipfs', () => {
     })
 })
 
-function waitForReplication(db: Store, closure: () => void, timeout = 5000): Promise<void> {
+/**
+ * A way to wait for the database to update. Using load might be better, but for now, we are using this.
+ *
+ * Note: Mocha will fail any test after 2 seconds unless a custom timeout is provided or --no-timeout is used
+ *
+ * @param db - The db to wait for
+ * @param timeout - How long should we wait before failing? (Defaults to 5 seconds)
+ */
+function waitForReplication(db: Store, timeout = 5000): Promise<void> {
     const timeoutID = setTimeout(() => assert.fail(`Did not replicate withing ${timeout / 1000}s`), timeout)
 
     return new Promise((accept) => {
         db.events.once('replicated', () => {
-            closure()
             clearTimeout(timeoutID)
             accept()
         });

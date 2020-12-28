@@ -1,8 +1,19 @@
-import OrbitDB from 'orbit-db';
 import Torrent from '@/domain/Torrent';
+import orbitDBService from "@/service/OrbitDBService";
+import ACLKeyValueStore from "@/domain/ACLKeyValueStore";
 
 export class TorrentService {
-    static instance: TorrentService;
+    static instance: TorrentService = new TorrentService();
+
+    private db!: ACLKeyValueStore<Torrent>
+
+    private constructor() {
+        this.build()
+    }
+
+    async build() {
+        this.db = await orbitDBService.createACLDatabase<Torrent>('TODO')
+    }
 
     createTorrent(torrent: Torrent) {
 
@@ -17,8 +28,8 @@ export class TorrentService {
     }
 
     retrieveTorrent(id: string): Torrent {
-
+        return this.db.get(id)
     }
 }
 
-export default TorrentService.instance = new TorrentService()
+export default TorrentService.instance
