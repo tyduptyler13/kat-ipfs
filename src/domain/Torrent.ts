@@ -1,6 +1,5 @@
-
 export default class Torrent {
-    description = ""
+    description = "";
     
     constructor(public readonly magnet: string) {
     }

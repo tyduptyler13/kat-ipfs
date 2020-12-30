@@ -1,0 +1,43 @@
+diff --git a/node_modules/@types/orbit-db/Store.d.ts b/node_modules/@types/orbit-db/Store.d.ts
+index a093ab0..f0c388f 100644
+--- a/node_modules/@types/orbit-db/Store.d.ts
++++ b/node_modules/@types/orbit-db/Store.d.ts
+@@ -3,6 +3,9 @@ declare module "orbit-db-store" {
+     import { Identity } from "orbit-db-identity-provider";
+     import { EventEmitter } from 'events';
+     import * as elliptic from "elliptic";
++    import AccessController from "orbit-db-access-controllers/src/access-controller-interface";
++
++    export type Address = { root: string, path: string };
+ 
+     export default class Store {
+ 
+@@ -11,19 +14,23 @@ declare module "orbit-db-store" {
+          */
+         readonly identity: Identity;
+ 
+-        address: { root: string, path: string };
++        address: Address;
++
++        protected readonly _index: any;
++        protected readonly access: AccessController
++
+         /** 
+          * Contains all entries of this Store
+          */
+-        all: any[];
+-        type: string;
++        get all(): any[];
++        get type(): string;
+         /**
+          * Returns an instance of `elliptic.ec.KeyPair`.
+          * The keypair is used to sign the database entries.
+          * The key can also be accessed from the OrbitDB instance: `orbitdb.key.getPublic('hex')`.
+          */
+-        key: elliptic.ec.KeyPair;
+-        replicationStatus: IReplicationStatus;
++        get key(): elliptic.ec.KeyPair;
++        get replicationStatus(): IReplicationStatus;
+          
+         events: EventEmitter;
+ 

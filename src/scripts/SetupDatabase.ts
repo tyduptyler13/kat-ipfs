@@ -1,7 +1,7 @@
 import ACLAccessController from "../domain/ACLAccessController";
 import IPFS from 'ipfs';
 import OrbitDB from "orbit-db";
-import ACLKeyValueStore from "@/domain/ACLKeyValueStore";
+import ACLKeyValueStore from "../domain/ACLKeyValueStore";
 
 (async () => {
 	const ipfs = await IPFS.create()
